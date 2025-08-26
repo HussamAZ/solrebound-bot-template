@@ -1,0 +1,33 @@
+name: Build and Push Docker Image
+
+on:
+  # هذا يجعل الـ workflow يعمل عند كل دفعة إلى الفرع الرئيسي
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    # سيتم تشغيل المهمة على أحدث نسخة من Ubuntu
+    runs-on: ubuntu-latest
+
+    steps:
+    # الخطوة 1: جلب الكود من المستودع
+    - name: Checkout the repository
+      uses: actions/checkout@v4
+
+    # الخطوة 2: تسجيل الدخول إلى Docker Hub باستخدام الأسرار
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    # الخطوة 3: بناء صورة Docker ورفعها
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        # hussamaz/solrebound-community-bot هو اسم الصورة
+        # :latest هي العلامة (tag)
+        tags: hussamaz/solrebound-community-bot:latest
