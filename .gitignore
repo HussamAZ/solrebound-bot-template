@@ -3,7 +3,7 @@
 
 # Environment variables
 .env
-
+docker-compose.yml
 bot.txt
 
 # Logs

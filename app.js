@@ -10,8 +10,9 @@ const RPC_URL = process.env.RPC_URL;
 const PARTNER_REFERRAL_LINK = process.env.PARTNER_REFERRAL_LINK;
 const PARTNER_TELEGRAM_ID = process.env.PARTNER_TELEGRAM_ID;
 const CMC_API_KEY = process.env.CMC_API_KEY;
+const PARTNER_CHANNEL_NAME = process.env.PARTNER_CHANNEL_NAME;
 
-if (!BOT_TOKEN || !RPC_URL || !PARTNER_REFERRAL_LINK || !PARTNER_TELEGRAM_ID || !CMC_API_KEY) {
+if (!BOT_TOKEN || !RPC_URL || !PARTNER_REFERRAL_LINK || !PARTNER_TELEGRAM_ID || !CMC_API_KEY || !PARTNER_CHANNEL_NAME) {
     console.error('Error: Essential environment variables are missing.');
     process.exit(1);
 }
@@ -20,16 +21,15 @@ if (!BOT_TOKEN || !RPC_URL || !PARTNER_REFERRAL_LINK || !PARTNER_TELEGRAM_ID || 
 const bot = new Telegraf(BOT_TOKEN);
 const connection = new Connection(RPC_URL, 'confirmed');
 
-// --- Price Fetching and Caching ---
+// --- Price Fetching and Caching (No changes) ---
 let solPriceUSD = null;
 let lastPriceFetch = 0;
-const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+const CACHE_DURATION = 15 * 60 * 1000;
 
 async function getSolPrice() {
+    // ... (This function remains exactly the same as the previous version)
     const now = Date.now();
-    if (solPriceUSD && (now - lastPriceFetch < CACHE_DURATION)) {
-        return solPriceUSD;
-    }
+    if (solPriceUSD && (now - lastPriceFetch < CACHE_DURATION)) { return solPriceUSD; }
     try {
         console.log('Fetching new SOL price from CoinMarketCap...');
         const response = await axios.get('https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest', {
@@ -46,21 +46,17 @@ async function getSolPrice() {
     }
 }
 
-// --- State Management for Wallet Address ---
+// --- State Management and Keyboard (No changes) ---
 const userState = {};
+const mainKeyboard = Markup.keyboard([['🔎 Check Wallet'], ['🔗 Claim SOL']]).resize();
 
-// --- Bot Keyboard ---
-const mainKeyboard = Markup.keyboard([
-    ['🔎 Check Wallet'],
-    ['🔗 Claim SOL']
-]).resize();
-
-// --- Bot Start Command ---
+// --- Bot Command Handlers ---
 bot.start(async (ctx) => {
     await getSolPrice();
     await ctx.reply(
-        '👋 Welcome to the Solana Wallet Checker Bot!',
-        mainKeyboard
+        `👋 Welcome to the official wallet checker for the **${PARTNER_CHANNEL_NAME}**!\n\n` +
+        `Use the buttons below to get started.`,
+        { parse_mode: 'Markdown', ...mainKeyboard }
     );
 });
 
@@ -83,18 +79,51 @@ bot.hears('🔗 Claim SOL', (ctx) => {
     );
 });
 
-// --- Hidden Admin Command ---
-bot.command('partner_stats', (ctx) => {
+
+// --- Hidden Admin Command (Updated for your API) ---
+bot.command('partner_stats', async (ctx) => {
     if (ctx.from.id.toString() !== PARTNER_TELEGRAM_ID) {
         return ctx.reply('🚫 This command is reserved for the channel owner.');
     }
-    ctx.reply(
-        `📊 Partnership Dashboard:\n\n` +
-        `👥 Total Users Referred: 50\n` +
-        `🔄 Total Transactions: 120\n` +
-        `💰 Total Earnings: 0.15 SOL`
-    );
+
+    await ctx.reply('📊 Fetching your latest partner statistics...');
+
+    try {
+        const url = new URL(PARTNER_REFERRAL_LINK);
+        const refCode = url.searchParams.get('ref');
+
+        if (!refCode) {
+            return ctx.reply('Error: Could not extract your referral code from the configured link.');
+        }
+
+        const apiUrl = `https://solrebound.com/api/referrals/partner-stats?ref_code=${refCode}`;
+        const response = await axios.get(apiUrl);
+
+        if (response.data && response.data.success) {
+            const stats = response.data.data;
+            await ctx.reply(
+                `📈 **Partnership Dashboard for ${PARTNER_CHANNEL_NAME}:**\n\n` +
+                `👥 **Total Users:** ${stats.userCount}\n` +
+                `🔄 **Total Transactions:** ${stats.transactionCount}\n` +
+                `💰 **Total Earnings:** ${stats.totalEarningsSOL.toFixed(4)} SOL`,
+                { parse_mode: 'Markdown' }
+            );
+        }
+        // NOTE: According to Sol Rebound docs, the API will send a 404 error, which will be caught by the catch block.
+        // The 'else' block here is a fallback in case the API returns a 200 OK with success:false.
+        else {
+            await ctx.reply(`Could not retrieve stats. The server responded: ${response.data.message || 'Unknown error'}`);
+        }
+    } catch (error) {
+        if (error.response && error.response.status === 404) {
+            await ctx.reply(`Could not retrieve stats. The server responded with an error (404 Not Found), which likely means the referral code is invalid.`);
+        } else {
+            console.error('Failed to fetch partner stats:', error);
+            await ctx.reply('An error occurred while trying to fetch your statistics. Please ensure the API is reachable and try again later.');
+        }
+    }
 });
+
 
 // --- Handle all other text messages ---
 bot.on('text', async (ctx) => {
@@ -156,7 +185,8 @@ bot.on('text', async (ctx) => {
     }
 });
 
-// --- Launch the bot ---
+
+// --- Launch the bot (No changes) ---
 bot.launch().then(() => {
     console.log('✅ Bot is now running...');
     getSolPrice();
