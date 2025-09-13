@@ -28,6 +28,6 @@ jobs:
       with:
         context: .
         push: true
-        # hussamaz/solrebound-community-bot هو اسم الصورة
-        # :latest هي العلامة (tag)
-        tags: hussamaz/solrebound-community-bot:latest
+        tags: |
+          hussamaz/solrebound-community-bot:${{ github.sha }}
+          hussamaz/solrebound-community-bot:latest
