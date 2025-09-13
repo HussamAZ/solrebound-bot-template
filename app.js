@@ -90,19 +90,20 @@ bot.hears('🔗 Reclaim My SOL', (ctx) => {
 
 bot.hears('💡 How it Works', (ctx) => {
     const explanationText = `
-💡 **Understanding Solana Account Rent & Recovery**
+💡 Understanding Solana Account Rent & Cleanup
 
-**1. The "Rent" Mechanism on Solana**
-On Solana, every new token you receive creates a dedicated "Associated Token Account" (ATA) in your wallet. Each ATA requires a tiny amount of SOL (approx. 0.002 SOL) to be locked as "rent" to keep it open on the blockchain. This SOL is technically still yours, but it's held within that specific ATA.
+1. The "Rent" Mechanism on Solana
+On Solana, every new token you receive creates a dedicated "Associated Token Account" (ATA). Each ATA requires a small amount of SOL (around 0.002 SOL) to stay active on the blockchain. This SOL is still yours, but it's locked inside that ATA.
 
-**2. The Problem: Unnecessary Locked SOL**
-Many users accumulate dozens of these ATAs. If an ATA has a zero balance (e.g., after selling a token), the "rent" SOL remains locked, cluttering your wallet and reducing your liquid SOL.
+2. The Problem: Inactive Accounts
+Over time, wallets collect many ATAs that no longer hold any tokens. The rent stays locked, which makes your wallet heavier and reduces your available balance.
 
-**3. The Solution: Safe Account Closure**
-Our tool, SolRebound, safely identifies these empty ATAs. When you choose to close them, the locked "rent" SOL is returned to your main wallet balance.
+3. The Solution: Account Cleanup
+Our tool identifies these inactive ATAs. When you choose to close them, the locked SOL becomes available again in your wallet.
 
-**4. Our Commitment to Safety**
-This is a standard, secure function of the Solana network. **We will NEVER ask for your private keys or seed phrase.** Our bot's code is also [open-source on GitHub](https://github.com/HussamAZ/solrebound-bot-template) for full auditability.
+4. Our Commitment to Safety
+This process uses standard functions of the Solana network. We will NEVER ask for your private keys or seed phrase. Our bot’s code is also [open-source on GitHub](https://github.com/HussamAZ/solrebound-bot-template) for transparency.
+
     `;
     ctx.reply(explanationText, { parse_mode: 'Markdown', ...mainKeyboard });
 });
